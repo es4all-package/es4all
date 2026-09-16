@@ -1,0 +1,31 @@
+url: ~
+template:
+  bootstrap: 5
+
+reference:
+- title: "Effect sizes"
+  contents:
+  - d_cont
+  - d_bin
+  - d_ord
+  - d_one
+  - d_pair
+  - d_np
+
+- title: "Options"
+  contents:
+  - set_opts
+
+- title: "Data for use in examples"
+  contents:
+  - comparison_data
+
+- title: "Power analysis"
+  contents:
+  - estimator_properties
+
+- title: "Other"
+  contents:
+  - print.astra_table
+  - show_options
+  - es4all-options

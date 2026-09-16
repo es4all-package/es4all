@@ -1,0 +1,42 @@
+Package: es4all
+Type: Package
+Title: Effect Sizes for All Data Types with CI's and P-Values
+Version: 0.9.0
+Authors@R: 
+    person(given = "[REDACTED]"
+        , family = "[REDACTED]"
+        , role = c("aut", "cre")
+        , email = "REDACTED@example.com"
+        , comment = c(ORCID = "[REDACTED]") )
+Description: Effect sizes for all variable types: continuous, binary, and
+    ordinal. Clear explanations to convey the practical significance of
+    differences to both statistical and non-statistical audiences. Text snippets
+    that authors can directly incorporate into the Methods and Results sections
+    of their research papers. Promote transparent and accessible communication
+    of empirical findings while fostering evidence-based decision making across
+    disciplines. Includes common language effect size, generalized odds ratio, 
+    Cliff's delta, Vargha and Delaney's A, Goodman and Kruskal's gamma, and
+    other dominance-based effect sizes. Confidence intervals and p-values /
+    hypothesis tests. 
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: true
+Imports:
+  assertthat,
+  magrittr,
+  glue,
+  huxtable
+Suggests: 
+  gt, 
+  kableExtra,
+  openxlsx2, 
+  flextable,
+  officer,
+  knitr, 
+  rmarkdown
+Depends: 
+    R (>= 3.5)
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.0.0
+RoxygenNote: 7.3.2
+VignetteBuilder: knitr

@@ -1,0 +1,73 @@
+.print_gt = function(df1, destination = NULL, ...) {
+  ##
+  if (.astra_is_list(df1)) {
+    if (length(df1) > 0) {
+      for (ii in 1:length(df1)) {
+        Recall(df1 = df1[[ii]], destination = destination, ...)
+      }
+    }
+    return(invisible(NULL))
+  }
+
+  ##
+  assert_package("print", "gt")
+  .astra_assert_table(df1)
+  dest = .get_destination(destination = destination)
+  assert_that(dest != "latex",
+              msg = "Have not implemented LaTeX printing with gt yet. Try set_opts(output = 'kableExtra')")
+  assert_that(dest %in% c("", "html"))
+
+  ## Functions below might use as.data.frame() if the argument is not a data.frame,
+  ## which creates unique column names, which is not what we want.
+  df1 = .astra_as_data_frame(df1)
+
+  ##
+  ## Non-unique names fix
+  nn0 = names(df1)
+  nn1 = nn0 %>% make.names(unique = TRUE)
+  names(df1) = nn1
+
+  hh = gt::opt_stylize(gt::gt(df1))
+  hh = gt::cols_label_with(hh, fn = function(v1) {
+    idx = which(nn1 == v1)
+    assert_that(length(idx) == 1)
+    nn0[idx]
+  })
+
+  if (!is.null(txt <- attr(df1, "title"))) {
+    hh = gt::tab_header(hh, title = txt)
+  }
+  if (!is.null(nc <- attr(df1, "num"))) {
+    hh = gt::fmt_integer(hh, columns = nc)
+  }
+  if (!is.null(txt <- attr(df1, "footer"))) {
+    hh = gt::tab_footnote(hh, footnote = txt, placement = "left")
+  }
+
+  ## HTML output runs through Pandoc when printed via `results='asis'`,
+  ## which misreads a raw "$" as opening math mode. Escape "$" in every
+  ## character cell by default; cells marked via .astra_mark_raw_markup()
+  ## (genuine LaTeX) are exempt so they still render as real math.
+  if (dest == "html") {
+    for (col in names(df1)[vapply(df1, is.character, logical(1))]) {
+      exempt = .astra_raw_markup_rows(df1, col)
+      rows_to_escape = setdiff(seq_len(nrow(df1)), exempt)
+      if (length(rows_to_escape) > 0) {
+        hh = gt::text_transform(
+          hh,
+          locations = gt::cells_body(columns = col, rows = rows_to_escape),
+          fn = function(x) gsub("$", "&#36;", x, fixed = TRUE)
+        )
+      }
+    }
+  }
+
+  ##
+  if (dest == "") {
+    print(hh)
+  } else if (dest == "html") {
+    print(gt::as_raw_html(hh))
+  } else {
+    stop("?")
+  }
+}

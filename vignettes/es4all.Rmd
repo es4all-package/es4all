@@ -1,0 +1,115 @@
+---
+title: "Introduction to es4all"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to es4all}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## The dominance family of effect sizes
+
+For two groups, let $d_{1,2}$ be the probability that a randomly drawn observation from group 1 is greater than a randomly drawn observation from group 2, $d_{2,1}$ the probability of the reverse, and $d^0$ the probability of a tie ($d_{1,2}+d_{2,1}+d^0=1$). Any effect size built from these three comparison probabilities is dominance-based. `es4all` reports the following members of the family:
+
+| Effect size | Abbrev. | Definition | Also known as |
+|---|---|---|---|
+| Stochastic difference | SD | $d_{1,2}-d_{2,1}$ | Cliff's delta, Glass rank-biserial correlation, net benefit; = risk difference (RD) for binary data |
+| Adjusted stochastic difference | ASD | $(d_{1,2}-d_{2,1})/(d_{1,2}+d_{2,1})$ | Goodman and Kruskal's gamma; = Yule's Q for binary data |
+| Number needed to treat | NNT | $1/(d_{1,2}-d_{2,1})$ | reciprocal of risk difference; binary data only |
+| Dominance | D | $d_{1,2}$ | Common language effect size (CLES), Grissom and Kim's probability of superiority |
+| Measure of stochastic superiority | MSS | $d_{1,2}+0.5\,d^0$ | Vargha and Delaney's A |
+| Adjusted dominance | AD | $d_{1,2}/(d_{1,2}+d_{2,1})$ | - |
+| Generalized odds ratio | GOR | $d_{1,2}/d_{2,1}$ | Agresti's generalized odds ratio, win ratio; = odds ratio (OR) for binary data; = odds for continuous data |
+| Win odds | WO | $(d_{1,2}+0.5\,d^0)/(d_{2,1}+0.5\,d^0)$ | odds form of MSS |
+| Standardized mean difference | SMD | $\sqrt{2} \Phi^{-1}(d_{1,2})$ | Cohen's d; continuous data only |
+
+For discrete (binary or ordinal) data, an important property of the effect size is whether it is **equivalence dependent**. SD, MSS, WO, and NNT are equivalence dependent: their attainable range narrows as the probability of a tie grows, making them shrink toward the point of no effect. See the [binary-data example](#why-equivalence-dependence-matters) below for an illustration of why this is a desirable property.
+
+## Functions
+
+| Function | Data type | Estimation |
+|---|---|---|
+| `d_cont()` | Continuous (normal) | Maximum likelihood (MLE) |
+| `d_bin()` | Binary | MLE |
+| `d_ord()` | Ordinal | MLE |
+| `d_one()` | Continuous, one-sample | MLE |
+| `d_pair()` | Continuous, paired | MLE |
+| `d_np()` | Any (continuous, binary, or ordinal) | Non-parametric (distribution-free) |
+
+Each `d_*()` function accepts known distribution parameters, sample summary statistics, or record-level microdata as input.
+
+## Examples
+
+### Continuous data
+
+```{r}
+library(es4all)
+```
+
+`set_opts(es = NA)` prints all effect sizes (the default), while `set_opts(es = c("D", "SD", ...))` prints a chosen subset. 
+
+```{r, results='asis'}
+set_opts(es = c("D", "SD"))
+d_cont(comparison_data$stature2)
+```
+
+### Why equivalence dependence matters
+
+This is the myocardial infarction (MI) example that has been discussed in the effect size literature. 
+
+```{r, results='asis'}
+set_opts(es = c("SD", "GOR"))
+d_bin(comparison_data$MI)
+```
+
+The equivalence-dependent SD is tiny (0.01) because almost all pairs of patients tie on the outcome ("had an MI" vs. "did not have an MI"), while the equivalence-independent GOR (1.8) describes a much larger effect among the pairs that are actually distinguishable. These descriptions answer different questions -- SD the population-wide question a treatment decision turns on, GOR the narrower question of how one-sided the comparison is among the pairs that differ.
+
+### Ordinal data
+
+Analysis of data from the 1948 trial of streptomycin for the treatment of tuberculosis.
+
+```{r, results='asis'}
+set_opts(es = NA) # restore the default (print all effect sizes)
+d_ord(comparison_data$TB)
+```
+
+## Built-in example datasets
+
+`es4all` comes with several datasets from published studies, used throughout its documentation and reproduced in the paper's examples:
+
+```{r}
+ret = NULL
+for (nn in names(comparison_data)) {
+  r1 = data.frame(Label = nn
+    , About = strtrim( attr(comparison_data[[nn]], "meta")$About, 25)
+    , `Group 1` = comparison_data[[nn]]$group[1]
+    , `Group 2` = comparison_data[[nn]]$group[2]
+    , Source = strtrim( attr(comparison_data[[nn]], "meta")$Source, 25)
+    , check.names = FALSE)
+  ret = rbind(ret, r1)
+}
+print(ret)
+```
+
+## Customizing output
+
+```{r}
+set_opts(
+  conf.level = 0.95,  # confidence level of the interval
+  es = NA,            # which effect sizes to print: NA (all, default) or a vector of names
+  output = "auto",    # "auto", "huxtable", "gt", "kableExtra", "flextable", "screen", "Excel", "Word", "CSV"
+  raw = FALSE         # if TRUE, return the raw intermediate data.frame instead of formatted output
+)
+show_opts()
+```
+
+`output = "auto"` selects huxtable for the console, gt for HTML, or kableExtra for PDF/LaTeX. `"Excel"`, `"Word"`, and `"CSV"` write to a file (pass `file = "..."`) and require the `openxlsx2` (for Excel) or `flextable` + `officer` (for Word) packages.
